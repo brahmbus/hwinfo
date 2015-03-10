@@ -8,7 +8,7 @@
 
 # global variables
 scriptname="hwinfo"
-version="0.1.2 (alpha)"
+version="0.1.2 (alpha-alpha)"
 
 # colors aliased to descriptive variables
 nocolor="\E[0m"
