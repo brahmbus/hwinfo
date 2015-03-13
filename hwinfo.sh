@@ -8,7 +8,8 @@
 
 # global variables
 scriptname="hwinfo"
-version="0.1.2 (alpha)"
+version="0.2.1 (alpha)"
+hwtype="none"
 
 # colors aliased to descriptive variables
 nocolor="\E[0m"
@@ -30,16 +31,16 @@ white="\033[1;37m" # bold white
 
 ec() { # `echo` in a color function
 	# usage: ec $color "text"
-	ecolor=${!1} # get the color
-	shift # $1 is removed here
-	echo -e ${ecolor}"${*}"${nocolor} # echo the rest
+	ecolor=${!1}
+	shift
+	echo -e ${ecolor}"${*}"${nocolor}
 }
 
 ec_n() { # `echo` in a color function without trailing new line
 	# usage: ec_n $color "text"
-	ecolor=${!1} # get the color
-	shift # $1 is removed here
-	echo -en ${ecolor}"${*}"${nocolor} # echo the rest
+	ecolor=${!1}
+	shift
+	echo -en ${ecolor}"${*}"${nocolor}
 }
 
 #paste() { # posts to linkable url
@@ -50,8 +51,7 @@ ec_n() { # `echo` in a color function without trailing new line
 #	rm $pbfile
 #}
 
-main() {
-
+main() { # displays main menu and handles case
 	start=0
 	while ((start==0))
 	do
@@ -74,43 +74,43 @@ main() {
 		case $selection in
 			C)
 				hwtype="cpu_info"
-				handler
+				selection_handler
 				start=1 ;;
 			M) 
 				hwtype="mem_info"
-				handler
+				selection_handler
 				start=1 ;;
 			D)
 				hwtype="drive_info"
-				handler
+				selection_handler
 				start=1 ;;
 			N) 	
 				hwtype="net_info"
-				handler
+				selection_handler
 				start=1 ;;
 			P) 	
 				hwtype="pci_info"
-				handler
+				selection_handler
 				start=1 ;;
 			R)	
 				hwtype="raid_info"
-				handler
+				selection_handler
 				start=1 ;;
 			A)	
 				hwtype="all_info"
-				handler
+				selection_handler
 				start=1 ;;
 			b)	
 				hwtype="block_info"
-				handler
+				selection_handler
 				start=1 ;;
 			u)	
 				hwtype="usb_info"
-				handler
+				selection_handler
 				start=1 ;;
 			m)	
 				hwtype="mobo_info"
-				handler
+				selection_handler
 				start=1 ;;
 			q)	
 				quit
@@ -120,20 +120,74 @@ main() {
 				start=1 ;;
 			o)	
 				hwtype="os_info"
-				handler
+				selection_handler
 				start=1 ;;
 			*)  
-			   	ec lightRed "Invalid Selection!" ; sleep 3 ; clear
+			   	ec lightRed "Invalid Selection!" ; sleep 2 ; clear
 		esac	
 	done
 }
 
-handler() { # execute menu selection
-	
-	# allow return to main menu
-	ec_n white "again?(y/n): "
-	read choice
-	if $choice 
+selection_handler() { # execute menu selection
+	clear
+	ec_n white "Running:" ; ec lightGreen $hwtype
+	sleep 1
+	clear
+	if [ "$hwtype" = "cpu_info" ]
+		then
+	    		cpu_info
+    	elif [ "$hwtype" = "mem_info" ]
+    		then
+        		mem_info
+    	elif [ "$hwtype" = "drive_info" ]
+    		then
+        		drive_info
+    	elif [ "$hwtype" = "net_info" ]
+    		then
+        		net_info
+    	elif [ "$hwtype" = "pci_info" ]
+    		then
+        		pci_info
+    	elif [ "$hwtype" = "raid_info" ]
+    		then
+        		raid_info
+    	elif [ "$hwtype" = "all_info" ]
+    		then
+        		all_info
+    	elif [ "$hwtype" = "block_info" ]
+    		then
+        		block_info
+    	elif [ "$hwtype" = "usb_info" ]
+    		then
+        		usb_info
+    	elif [ "$hwtype" = "mobo_info" ]
+    		then
+        		mobo_info
+    	else
+        	ec lightRed "An unhandled -- *wink*wink -- error occurred."
+        	main
+    	fi
+}
+
+repeater() { # allows return to main menu
+	again=0
+	while ((again==0))
+	do
+	    ec_n white "Again?(y/n): "	
+		read choice
+		case $choice in
+			y)
+				main
+				again=1 ;;
+			n) 
+				quit
+				again=1 ;;
+			*)  
+			   	ec lightRed "Invalid option. Assuming yes."
+			   	main
+			   	again=1 ;;
+		esac	
+	done
 }
 
 cpu_info() { # gathers and displays cpu model and cores
@@ -142,7 +196,8 @@ cpu_info() { # gathers and displays cpu model and cores
 	clear	
 	ec yellow "***CPU INFO***\n"
 	ec_n white "CPU:" ; ec lightGreen "$cpu_model\n"
-	ec_n white "Number of Cores:" ; ec lightGreen $cpu_cores
+	ec_n white "Number of Cores:" ; ec lightGreen "$cpu_cores\n"
+	repeater
 }
 
 mem_info() { # gathers and displays memory total in kB with details on slots
@@ -161,6 +216,7 @@ mem_info() { # gathers and displays memory total in kB with details on slots
 			ec_n white "Slot$dimm has " ; ec lightRed "`dmidecode -t 17 | grep Size | cut -d: -f2 | head -n$dimm | tail -n1`"
 			let dimm=dimm+1
 		done
+	repeater
 }
 
 drive_info() {
@@ -171,7 +227,9 @@ net_info() {
 	clear
 }
 
-pci_info() {
+pci_info() { # gathers and displays pci devices for runtime environment
+	full_pci=`lspci -mmvv | grep -v "SDevice\|Rev\|Class\|ProgIf\|PhySlot\|SVendor"`
+	
 	clear
 }
 
@@ -202,8 +260,10 @@ os_info() {
 quit() {
 	clear
 	ec lightRed "Exiting......"
-	sleep 3
+	sleep 1
 	clear
 }
 
 main
+
+# end hwinfo.sh
