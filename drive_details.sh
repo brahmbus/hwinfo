@@ -40,9 +40,10 @@ ec_n() { # `echo` in a color function without trailing new line
 	echo -en ${ecolor}"${*}"${nocolor} # echo the rest
 }
 
+drive_list=`parted -l | grep Disk | grep -v Flags | cut -d ' ' -f2,3`
+
 	ec yellow "***MEMORY INFO***\n"
 # set variable for total memory #
-memory_total=`cat /proc/meminfo | grep MemTotal | cut -d: -f2 | tr -s [:space:]`
 	ec_n white "Total system memory:" ; ec lightGreen "$memory_total\n"
 # set variable for memory slots #
 memory_slots=`dmidecode -t 17 | grep "Size" | wc -l`
